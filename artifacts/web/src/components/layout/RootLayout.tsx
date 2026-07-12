@@ -1,0 +1,12 @@
+import { Navbar } from "./Navbar";
+import { Footer } from "./Footer";
+
+export function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-[100dvh] flex-col">
+      <Navbar />
+      <main className="flex-1 flex flex-col">{children}</main>
+      <Footer />
+    </div>
+  );
+}

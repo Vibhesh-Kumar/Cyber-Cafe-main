@@ -3,13 +3,35 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Bihar Cyber Café Digital Service Portal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: Users
+    description: Current user profile and admin user management
+  - name: Categories
+    description: Government service categories
+  - name: Services
+    description: Government services catalog
+  - name: Applications
+    description: Customer service applications
+  - name: Payments
+    description: Application payments
+  - name: Notifications
+    description: User notifications
+  - name: Blogs
+    description: Public blog content
+  - name: Faqs
+    description: Frequently asked questions
+  - name: Tickets
+    description: Support tickets
+  - name: Admin
+    description: Admin dashboard aggregates
+  - name: Storage
+    description: Object storage upload and serving endpoints.
 paths:
   /healthz:
     get:
@@ -24,6 +46,998 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [Users]
+      summary: Get or JIT-provision the current user's profile
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateMe
+      tags: [Users]
+      summary: Update current user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [Users]
+      summary: List users (admin only)
+      parameters:
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/UserRole"
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /users/{id}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [Users]
+      summary: Update a user's role (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRoleUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [Categories]
+      summary: List service categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /services:
+    get:
+      operationId: listServices
+      tags: [Services]
+      summary: List services, optionally filtered by category
+      parameters:
+        - name: categorySlug
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+    post:
+      operationId: createService
+      tags: [Services]
+      summary: Create a service (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceInput"
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /services/{id}:
+    get:
+      operationId: getService
+      tags: [Services]
+      summary: Get a single service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Service detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateService
+      tags: [Services]
+      summary: Update a service (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceUpdate"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteService
+      tags: [Services]
+      summary: Delete a service (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [Applications]
+      summary: List applications (own for customers, all for operator/admin)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ApplicationStatus"
+      responses:
+        "200":
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createApplication
+      tags: [Applications]
+      summary: Submit a new service application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Created application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /applications/track:
+    get:
+      operationId: trackApplication
+      tags: [Applications]
+      summary: Publicly track an application by number and email
+      parameters:
+        - name: applicationNumber
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Application tracking info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationTracking"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [Applications]
+      summary: Get application detail (owner, operator, or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Application detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /applications/{id}/status:
+    patch:
+      operationId: updateApplicationStatus
+      tags: [Applications]
+      summary: Update application status (operator/admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationStatusUpdate"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /applications/{id}/documents:
+    get:
+      operationId: listApplicationDocuments
+      tags: [Applications]
+      summary: List documents attached to an application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: addApplicationDocument
+      tags: [Applications]
+      summary: Attach an uploaded document to an application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentInput"
+      responses:
+        "201":
+          description: Attached document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /applications/{id}/pay:
+    post:
+      operationId: payApplication
+      tags: [Payments]
+      summary: Simulate payment for an application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [Notifications]
+      summary: List current user's notifications
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [Notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /blogs:
+    get:
+      operationId: listBlogs
+      tags: [Blogs]
+      summary: List published blog posts
+      responses:
+        "200":
+          description: List of blog posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Blog"
+    post:
+      operationId: createBlog
+      tags: [Blogs]
+      summary: Create a blog post (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogInput"
+      responses:
+        "201":
+          description: Created blog post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blog"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /blogs/{slug}:
+    get:
+      operationId: getBlog
+      tags: [Blogs]
+      summary: Get a blog post by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blog post detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blog"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /blogs/id/{id}:
+    patch:
+      operationId: updateBlog
+      tags: [Blogs]
+      summary: Update a blog post (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogUpdate"
+      responses:
+        "200":
+          description: Updated blog post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blog"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteBlog
+      tags: [Blogs]
+      summary: Delete a blog post (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /faqs:
+    get:
+      operationId: listFaqs
+      tags: [Faqs]
+      summary: List FAQs
+      responses:
+        "200":
+          description: List of FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Faq"
+    post:
+      operationId: createFaq
+      tags: [Faqs]
+      summary: Create an FAQ (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FaqInput"
+      responses:
+        "201":
+          description: Created FAQ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Faq"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /faqs/{id}:
+    patch:
+      operationId: updateFaq
+      tags: [Faqs]
+      summary: Update an FAQ (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FaqUpdate"
+      responses:
+        "200":
+          description: Updated FAQ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Faq"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteFaq
+      tags: [Faqs]
+      summary: Delete an FAQ (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /tickets:
+    get:
+      operationId: listTickets
+      tags: [Tickets]
+      summary: List support tickets (own for customers, all for operator/admin)
+      responses:
+        "200":
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createTicket
+      tags: [Tickets]
+      summary: Create a support ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketInput"
+      responses:
+        "201":
+          description: Created ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /tickets/{id}:
+    patch:
+      operationId: updateTicket
+      tags: [Tickets]
+      summary: Update a ticket's status/reply (operator/admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketUpdate"
+      responses:
+        "200":
+          description: Updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [Admin]
+      summary: Get admin dashboard aggregate statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      description: |
+        Returns a presigned GCS URL for direct upload. The client sends JSON
+        metadata here, then uploads the file directly to the returned URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+      description: |
+        Unconditionally public — no authentication or ACL checks.
+        Searches PUBLIC_OBJECT_SEARCH_PATHS for the given file path.
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Relative file path within the public search paths.
+      responses:
+        "200":
+          description: Object content streamed with correct Content-Type.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Failed to serve public object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an object entity from PRIVATE_OBJECT_DIR
+      description: |
+        Serves object entities uploaded via presigned URLs. These can optionally
+        be protected with authentication or ACL checks based on the use case.
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path within the private object dir (e.g. `uploads/some-uuid`).
+      responses:
+        "200":
+          description: Object content streamed with correct Content-Type.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Object not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Failed to serve object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +1048,608 @@ components:
       required:
         - status
 
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    UserRole:
+      type: string
+      enum: [customer, operator, admin]
+
+    User:
+      type: object
+      required: [id, email, name, role, createdAt]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        phone:
+          type: ["string", "null"]
+        role:
+          $ref: "#/components/schemas/UserRole"
+        createdAt:
+          type: string
+          format: date-time
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+
+    UserRoleUpdate:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/UserRole"
+
+    Category:
+      type: object
+      required: [id, slug, name, description, icon]
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+
+    FormField:
+      type: object
+      required: [name, label, type, required]
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [text, number, date, select, textarea, checkbox]
+        required:
+          type: boolean
+        options:
+          type: array
+          items:
+            type: string
+
+    Service:
+      type: object
+      required:
+        [
+          id,
+          categoryId,
+          categorySlug,
+          categoryName,
+          name,
+          slug,
+          description,
+          price,
+          estimatedDays,
+          formSchema,
+          requiredDocuments,
+          isActive,
+          createdAt,
+        ]
+      properties:
+        id:
+          type: integer
+        categoryId:
+          type: integer
+        categorySlug:
+          type: string
+        categoryName:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        estimatedDays:
+          type: integer
+        formSchema:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormField"
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ServiceInput:
+      type: object
+      required:
+        [
+          categoryId,
+          name,
+          description,
+          price,
+          estimatedDays,
+          formSchema,
+          requiredDocuments,
+        ]
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        estimatedDays:
+          type: integer
+          minimum: 0
+        formSchema:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormField"
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+
+    ServiceUpdate:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        estimatedDays:
+          type: integer
+          minimum: 0
+        formSchema:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormField"
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+
+    ApplicationStatus:
+      type: string
+      enum: [submitted, under_review, approved, rejected, completed]
+
+    PaymentStatus:
+      type: string
+      enum: [pending, paid]
+
+    StatusHistoryEntry:
+      type: object
+      required: [id, status, note, createdAt]
+      properties:
+        id:
+          type: integer
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    Application:
+      type: object
+      required:
+        [
+          id,
+          applicationNumber,
+          userId,
+          applicantName,
+          applicantEmail,
+          serviceId,
+          serviceName,
+          categoryName,
+          formData,
+          status,
+          paymentStatus,
+          amount,
+          createdAt,
+          updatedAt,
+          statusHistory,
+        ]
+      properties:
+        id:
+          type: integer
+        applicationNumber:
+          type: string
+        userId:
+          type: string
+        applicantName:
+          type: string
+        applicantEmail:
+          type: string
+        serviceId:
+          type: integer
+        serviceName:
+          type: string
+        categoryName:
+          type: string
+        formData:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        paymentStatus:
+          $ref: "#/components/schemas/PaymentStatus"
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusHistoryEntry"
+
+    ApplicationTracking:
+      type: object
+      required:
+        [
+          applicationNumber,
+          serviceName,
+          status,
+          paymentStatus,
+          createdAt,
+          updatedAt,
+          statusHistory,
+        ]
+      properties:
+        applicationNumber:
+          type: string
+        serviceName:
+          type: string
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        paymentStatus:
+          $ref: "#/components/schemas/PaymentStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusHistoryEntry"
+
+    ApplicationInput:
+      type: object
+      required: [serviceId, formData]
+      properties:
+        serviceId:
+          type: integer
+        formData:
+          type: object
+          additionalProperties: true
+
+    ApplicationStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        note:
+          type: string
+
+    DocumentRecord:
+      type: object
+      required: [id, applicationId, fileName, objectPath, uploadedAt]
+      properties:
+        id:
+          type: integer
+        applicationId:
+          type: integer
+        fileName:
+          type: string
+        objectPath:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+
+    DocumentInput:
+      type: object
+      required: [fileName, objectPath]
+      properties:
+        fileName:
+          type: string
+          minLength: 1
+        objectPath:
+          type: string
+          minLength: 1
+
+    Payment:
+      type: object
+      required: [id, applicationId, amount, status, method, paidAt]
+      properties:
+        id:
+          type: integer
+        applicationId:
+          type: integer
+        amount:
+          type: number
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        method:
+          type: string
+        paidAt:
+          type: ["string", "null"]
+          format: date-time
+
+    Notification:
+      type: object
+      required: [id, title, message, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Blog:
+      type: object
+      required:
+        [
+          id,
+          slug,
+          title,
+          excerpt,
+          content,
+          coverImageUrl,
+          authorName,
+          publishedAt,
+        ]
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        title:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        coverImageUrl:
+          type: ["string", "null"]
+        authorName:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+
+    BlogInput:
+      type: object
+      required: [title, excerpt, content, authorName]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        excerpt:
+          type: string
+        content:
+          type: string
+        coverImageUrl:
+          type: string
+        authorName:
+          type: string
+
+    BlogUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        excerpt:
+          type: string
+        content:
+          type: string
+        coverImageUrl:
+          type: string
+        authorName:
+          type: string
+
+    Faq:
+      type: object
+      required: [id, question, answer, category]
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        answer:
+          type: string
+        category:
+          type: ["string", "null"]
+
+    FaqInput:
+      type: object
+      required: [question, answer]
+      properties:
+        question:
+          type: string
+          minLength: 1
+        answer:
+          type: string
+          minLength: 1
+        category:
+          type: string
+
+    FaqUpdate:
+      type: object
+      properties:
+        question:
+          type: string
+          minLength: 1
+        answer:
+          type: string
+          minLength: 1
+        category:
+          type: string
+
+    TicketStatus:
+      type: string
+      enum: [open, in_progress, resolved]
+
+    Ticket:
+      type: object
+      required:
+        [
+          id,
+          userId,
+          subject,
+          message,
+          status,
+          adminReply,
+          applicationId,
+          createdAt,
+        ]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        status:
+          $ref: "#/components/schemas/TicketStatus"
+        adminReply:
+          type: ["string", "null"]
+        applicationId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    TicketInput:
+      type: object
+      required: [subject, message]
+      properties:
+        subject:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+        applicationId:
+          type: integer
+
+    TicketUpdate:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/TicketStatus"
+        adminReply:
+          type: string
+
+    AdminStats:
+      type: object
+      required:
+        [
+          totalApplications,
+          pendingApplications,
+          completedApplications,
+          totalRevenue,
+          totalUsers,
+          totalServices,
+          applicationsByStatus,
+          recentApplications,
+        ]
+      properties:
+        totalApplications:
+          type: integer
+        pendingApplications:
+          type: integer
+        completedApplications:
+          type: integer
+        totalRevenue:
+          type: number
+        totalUsers:
+          type: integer
+        totalServices:
+          type: integer
+        applicationsByStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        recentApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Application"
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Original file name.
+        size:
+          type: integer
+          minimum: 1
+          description: File size in bytes.
+        contentType:
+          type: string
+          minLength: 1
+          description: MIME type of the file (e.g. `image/jpeg`).
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          description: Presigned GCS URL for PUT upload.
+        objectPath:
+          type: string
+          description: Normalized object path (e.g. `/objects/uploads/uuid`). Store this in your database.
+        metadata:
+          $ref: "#/components/schemas/UploadUrlRequest"
